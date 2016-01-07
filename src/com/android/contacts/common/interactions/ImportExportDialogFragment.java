@@ -338,7 +338,7 @@ public class ImportExportDialogFragment extends DialogFragment
         Intent intent = new Intent(ACTION_MULTI_PICK);
         intent.setType(Contacts.CONTENT_TYPE);
         ContactListFilter filter = new ContactListFilter(
-                ContactListFilter.FILTER_TYPE_CUSTOM, null, null, null, null);
+                ContactListFilter.FILTER_TYPE_ALL_ACCOUNTS, null, null, null, null);
         intent.putExtra(AccountFilterActivity.KEY_EXTRA_CONTACT_LIST_FILTER,
                 filter);
         intent.putExtra(IS_CONTACT,true);
@@ -622,12 +622,14 @@ public class ImportExportDialogFragment extends DialogFragment
             // call query first, otherwise insert will fail if this insert is called
             // without any query before
             try{
-                if (subscription == SimContactsConstants.SUB_1) {
-                    cr = mPeople.getContentResolver().query(Uri.parse("content://iccmsim/adn"),
-                        null, null, null, null);
-                } else if (subscription == SimContactsConstants.SUB_2) {
-                    cr = mPeople.getContentResolver().query(
-                            Uri.parse("content://iccmsim/adn_sub2"), null, null, null, null);
+                if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+                    if (subscription == SimContactsConstants.SUB_1) {
+                        cr = mPeople.getContentResolver().query(Uri.parse("content://iccmsim/adn"),
+                            null, null, null, null);
+                    } else if (subscription == SimContactsConstants.SUB_2) {
+                        cr = mPeople.getContentResolver().query(
+                                Uri.parse("content://iccmsim/adn_sub2"), null, null, null, null);
+                    }
                 } else {
                     cr = mPeople.getContentResolver().query(Uri.parse("content://icc/adn"), null,
                         null, null, null);
@@ -639,7 +641,7 @@ public class ImportExportDialogFragment extends DialogFragment
                     cr.close();
                 }
             }
-
+            freeSimCount = MoreContactUtils.getSimFreeCount(mPeople,subscription);
             boolean canSaveAnr = MoreContactUtils.canSaveAnr(subscription);
             boolean canSaveEmail = MoreContactUtils.canSaveEmail(subscription);
             int emptyAnr = MoreContactUtils.getSpareAnrCount(subscription);
@@ -1002,7 +1004,8 @@ public class ImportExportDialogFragment extends DialogFragment
             case R.string.export_to_sim: {
                 String[] items = new String[MSimTelephonyManager.getDefault().getPhoneCount()];
                 for (int i = 0; i < items.length; i++) {
-                    items[i] = getString(R.string.export_to_sim) + ": " + getMultiSimName(i);
+                    items[i] = getString(R.string.export_to_sim) + ": "
+                            + MoreContactUtils.getMultiSimAliasesName(getActivity(), i);
                 }
                 mExportSub = SimContactsConstants.SUB_1;
                 ExportToSimSelectListener listener = new ExportToSimSelectListener();
@@ -1063,7 +1066,8 @@ public class ImportExportDialogFragment extends DialogFragment
         // item is for sim account to show
         String[] items = new String[MSimTelephonyManager.getDefault().getPhoneCount()];
         for (int i = 0; i < items.length; i++) {
-            items[i] = getString(R.string.import_from_sim) + ": " + getMultiSimName(i);
+            items[i] = getString(R.string.import_from_sim) + ": "
+                    + MoreContactUtils.getMultiSimAliasesName(getActivity(), i);
         }
         new AlertDialog.Builder(getActivity())
                 .setTitle(R.string.import_from_sim)

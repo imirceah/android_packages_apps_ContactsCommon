@@ -402,13 +402,7 @@ public class MoreContactUtils {
         SimContactsOperation mSimContactsOperation = new SimContactsOperation(context);
         result = mSimContactsOperation.insert(mValues, subscription);
 
-        if (result != null) {
-            // we should import the contact to the sim account at the same time.
-            String[] value = new String[] {
-                    name, number, emails, anrNumber
-            };
-            insertToPhone(value, context.getContentResolver(),subscription);
-        } else {
+        if (result == null) {
             Log.e(TAG, "export contact: [" + name + ", " + number + ", " + emails + "] to slot "
                     + subscription + " failed");
         }
@@ -832,12 +826,13 @@ public class MoreContactUtils {
     }
 
     public static String getSDPath(Context context) {
+        final String sdcardDesc = context.getString(com.android.internal.R.string.storage_sd_card);
         StorageManager mStorageManager = (StorageManager) context
                 .getSystemService(Context.STORAGE_SERVICE);
         StorageVolume[] volumes = mStorageManager.getVolumeList();
         for (int i = 0; i < volumes.length; i++) {
             if (volumes[i].isRemovable() && volumes[i].allowMassStorage()
-                    && volumes[i].getDescription(context).contains("SD")) {
+                    && volumes[i].getDescription(context).equals(sdcardDesc)) {
                 return volumes[i].getPath();
             }
         }
@@ -880,12 +875,7 @@ public class MoreContactUtils {
         }
         MSimTelephonyManager stm = getMSimTelephonyManager();
         if (stm.isMultiSimEnabled()) {
-            String name = Settings.System.getString(context.getContentResolver(),
-                    MULTI_SIM_NAME[subscription]);
-            if (!TextUtils.isEmpty(name)) {
-                return name;
-            }
-            return context.getString(R.string.account_sim) + " " + (subscription + 1);
+            return stm.getFormattedSimName(context, subscription);
         }
 
         return context.getString(R.string.account_sim);

@@ -45,12 +45,12 @@ public class NotificationImportExportListener implements VCardImportExportListen
     /* package */ static final String FAILURE_NOTIFICATION_TAG = "VCardServiceFailure";
 
     private final NotificationManager mNotificationManager;
-    private final Activity mContext;
+    private final Context mContext;
     private final Handler mHandler;
 
-    public NotificationImportExportListener(Activity activity) {
-        mContext = activity;
-        mNotificationManager = (NotificationManager) activity.getSystemService(
+    public NotificationImportExportListener(Context context) {
+        mContext = context;
+        mNotificationManager = (NotificationManager) context.getSystemService(
                 Context.NOTIFICATION_SERVICE);
         mHandler = new Handler(this);
     }
@@ -97,16 +97,11 @@ public class NotificationImportExportListener implements VCardImportExportListen
         }
 
         final String totalCountString = String.valueOf(totalCount);
-        final String tickerText =
-                mContext.getString(R.string.progress_notifier_message,
-                        String.valueOf(currentCount),
-                        totalCountString,
-                        entry.getDisplayName());
         final String description = mContext.getString(R.string.importing_vcard_description,
                 entry.getDisplayName());
 
         final Notification notification = constructProgressNotification(
-                mContext.getApplicationContext(), VCardService.TYPE_IMPORT, description, tickerText,
+                mContext.getApplicationContext(), VCardService.TYPE_IMPORT, description, null,
                 jobId, request.displayName, totalCount, currentCount);
         mNotificationManager.notify(DEFAULT_NOTIFICATION_TAG, jobId, notification);
     }
@@ -215,7 +210,7 @@ public class NotificationImportExportListener implements VCardImportExportListen
 
         final Notification.Builder builder = new Notification.Builder(context);
         builder.setOngoing(true)
-                .setProgress(totalCount, currentCount, totalCount == - 1)
+                .setProgress(totalCount, currentCount, totalCount == -1)
                 .setTicker(tickerText)
                 .setContentTitle(description)
                 .setSmallIcon(type == VCardService.TYPE_IMPORT
@@ -286,6 +281,5 @@ public class NotificationImportExportListener implements VCardImportExportListen
 
     @Override
     public void onComplete() {
-        mContext.finish();
     }
 }
